@@ -73,9 +73,12 @@ def pytest_runtest_makereport(item, call):
     if rep.when == "call" and rep.failed:
         _driver = item.funcargs.get("driver")
         if _driver is not None:
-            os.makedirs("screenshots", exist_ok=True)
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            test_name = item.name.replace("/", "_").replace("::", "_")
-            path = os.path.join("screenshots", f"{test_name}_{timestamp}.png")
-            _driver.save_screenshot(path)
-            print(f"\nScreenshot saved: {path}")
+            try:
+                os.makedirs("screenshots", exist_ok=True)
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                test_name = item.name.replace("/", "_").replace("::", "_")
+                path = os.path.join("screenshots", f"{test_name}_{timestamp}.png")
+                _driver.save_screenshot(path)
+                print(f"\nScreenshot saved: {path}")
+            except Exception:
+                pass

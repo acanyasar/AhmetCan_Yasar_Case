@@ -1,11 +1,14 @@
 import os
 from datetime import datetime
+from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import ElementClickInterceptedException
 
 
 class BasePage:
     TIMEOUT = 15
+    COOKIE_ACCEPT_BTN = (By.CSS_SELECTOR, "#wt-cli-accept-all-btn, #wt-cli-accept-btn")
 
     def __init__(self, driver):
         self.driver = driver
@@ -23,7 +26,11 @@ class BasePage:
 
     def click(self, locator):
         element = self.wait.until(EC.element_to_be_clickable(locator))
-        element.click()
+        try:
+            element.click()
+        except ElementClickInterceptedException:
+            # Fixed navbar or overlay is blocking — fall back to JS click
+            self.driver.execute_script("arguments[0].click();", element)
 
     def is_visible(self, locator) -> bool:
         try:
@@ -46,6 +53,15 @@ class BasePage:
         element = self.find(locator)
         self.driver.execute_script("arguments[0].scrollIntoView(true);", element)
         return element
+
+    def accept_cookies_if_present(self):
+        try:
+            btn = WebDriverWait(self.driver, 5).until(
+                EC.element_to_be_clickable(self.COOKIE_ACCEPT_BTN)
+            )
+            btn.click()
+        except Exception:
+            pass  # No cookie banner present
 
     def wait_for_url_contains(self, fragment: str):
         self.wait.until(EC.url_contains(fragment))
